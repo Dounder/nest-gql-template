@@ -16,7 +16,7 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-    })
+    }),
   );
 
   app.useGlobalFilters(new ExceptionsFilter());

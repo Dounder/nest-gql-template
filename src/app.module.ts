@@ -18,11 +18,7 @@ import { HealthModule } from './modules';
       path: '/v1/gql',
       formatError: (error) => {
         const { message, extensions, path } = error;
-        const {
-          status = HttpStatus.BAD_REQUEST,
-          timestamp = new Date().toISOString(),
-          errors = [],
-        } = extensions || {};
+        const { status = HttpStatus.BAD_REQUEST, timestamp = new Date().toISOString(), errors = [] } = extensions || {};
         return { path, message, errors, status, timestamp };
       },
     }),
