@@ -1,0 +1,21 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type HealthDto {
+  message: String!
+}
+
+type Mutation {
+  testError(dto: TestErrorDto!): String!
+}
+
+type Query {
+  errorCheck: String!
+  healthCheck: HealthDto!
+}
+
+input TestErrorDto {
+  """Test string field"""
+  test: String!
+}

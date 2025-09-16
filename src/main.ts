@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 
 import { AppModule } from './app.module';
 import { envs } from './config';
+import { ExceptionsFilter } from './filters';
 
 const logger = new Logger('Bootstrap');
 
@@ -11,14 +12,6 @@ async function bootstrap() {
 
   app.enableCors({ origin: true }); // Enable CORS for all origins
 
-  app.setGlobalPrefix('api');
-
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-    prefix: 'v',
-  });
-
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -26,8 +19,10 @@ async function bootstrap() {
     })
   );
 
+  app.useGlobalFilters(new ExceptionsFilter());
+
   await app.listen(envs.port);
-  logger.log(`Application is running on: ${await app.getUrl()}`);
+  logger.log(`Application is running on: ${await app.getUrl()}/v1/gql`);
 }
 
 bootstrap().catch((error) => {
