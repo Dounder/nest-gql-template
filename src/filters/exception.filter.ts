@@ -1,8 +1,16 @@
-import { ArgumentsHost, BadRequestException, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
+import {
+  ArgumentsHost,
+  BadRequestException,
+  Catch,
+  ExceptionFilter,
+  HttpException,
+  HttpStatus,
+  Logger,
+} from '@nestjs/common';
 import { GraphQLError } from 'graphql';
 
 interface ValidationErrorResponse {
-  message: string[];
+  message: string | string[];
   error: string;
   statusCode: number;
 }
@@ -14,31 +22,52 @@ export class ExceptionsFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     this.logger.error(`Exception caught: ${JSON.stringify(exception)}`);
 
+    // Handle existing GraphQL errors
     if (exception instanceof GraphQLError) {
-      const { message, extensions } = exception;
-      const { code = 500 } = extensions || {};
-      throw new GraphQLError(message, {
-        extensions: { status: code, timestamp: new Date().toISOString() },
-      });
-    }
-
-    if (exception instanceof BadRequestException) {
-      const response = exception.getResponse() as ValidationErrorResponse | string;
-      const errors = typeof response === 'string' ? [response] : response.message || [];
-      const message = errors.length > 1 ? 'Validation failed' : exception.message;
-      throw new GraphQLError(message, {
+      const { message: gqlMessage, extensions } = exception;
+      const { code = HttpStatus.INTERNAL_SERVER_ERROR } = extensions || {};
+      throw new GraphQLError(gqlMessage, {
         extensions: {
-          status: HttpStatus.BAD_REQUEST,
+          status: code,
           timestamp: new Date().toISOString(),
-          errors: errors,
+          errors: [],
         },
       });
     }
 
-    throw new GraphQLError('Internal Server Error', {
+    // Handle non-HTTP exceptions
+    if (!(exception instanceof HttpException)) {
+      this.logger.error(`Unhandled exception: ${exception}`, exception instanceof Error ? exception.stack : undefined);
+
+      throw new GraphQLError('Internal server error', {
+        extensions: {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          timestamp: new Date().toISOString(),
+          errors: ['Internal Server Error'],
+        },
+      });
+    }
+
+    const status = exception.getStatus();
+    const exceptionResponse = exception.getResponse() as ValidationErrorResponse | string;
+
+    const message =
+      typeof exceptionResponse === 'string' ? exceptionResponse : exceptionResponse.message || exception.message;
+
+    const error = typeof exceptionResponse === 'string' ? exception.name : exceptionResponse.error || exception.name;
+
+    // Special handling for validation errors
+    const isValidationError = exception instanceof BadRequestException && Array.isArray(message);
+    const finalMessage = isValidationError ? 'Validation error' : message;
+    const finalErrors = isValidationError ? message : [error];
+
+    this.logger.error(`GraphQL Exception: (${status}) - ${JSON.stringify(message)}`);
+
+    throw new GraphQLError(finalMessage as string, {
       extensions: {
-        status: HttpStatus.INTERNAL_SERVER_ERROR,
+        statusCode: status,
         timestamp: new Date().toISOString(),
+        errors: finalErrors,
       },
     });
   }
