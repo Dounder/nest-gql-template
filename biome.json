@@ -14,7 +14,15 @@
     "bracketSpacing": true,
     "expand": "auto",
     "useEditorconfig": true,
-    "includes": ["**", "!**/node_modules/", "!**/dist/", "!**/build/", "!**/coverage/", "!**/.commitlintrc.js", "!**/schema.gql"]
+    "includes": [
+      "**",
+      "!**/node_modules/",
+      "!**/dist/",
+      "!**/build/",
+      "!**/coverage/",
+      "!**/.commitlintrc.js",
+      "!**/schema.gql"
+    ]
   },
   "linter": {
     "enabled": true,
