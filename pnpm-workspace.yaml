@@ -7,3 +7,5 @@ onlyBuiltDependencies:
   - lefthook
   - prisma
   - unrs-resolver
+
+minimumReleaseAge: 1440 # 1 day
